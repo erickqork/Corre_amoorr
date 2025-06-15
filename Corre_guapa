@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Corre mi princesa 🐾</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to top, #ffe0e9, #fff0f5);
+      overflow: hidden;
+      font-family: 'Arial', sans-serif;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background-color: #ffccdd;
+    }
+    #message {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff0f5;
+      padding: 20px 30px;
+      border-radius: 15px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      font-size: 1.2em;
+      color: #333;
+      text-align: center;
+      display: none;
+      z-index: 3;
+    }
+    #play {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: #ff6fa5;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 1em;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <div id="message">
+    <span id="msgText"></span><br>
+    <button id="play">Jugar</button>
+  </div>
+
+<script>
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  function initCanvas(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  initCanvas();
+  window.addEventListener('resize', initCanvas);
+
+  const kittyImg = new Image(); kittyImg.src = 'https://i.imgur.com/NHZ5Y0v.png';
+  const fresaImg = new Image(); fresaImg.src = 'https://i.imgur.com/JzkwQMr.png';
+  const pinoImg = new Image(); pinoImg.src = 'https://i.imgur.com/NrUAnfX.png';
+
+  let kitty, obstacles, frameCount, gameEnded;
+  const gravity = 1.2, jumpPower = 18;
+
+  const messages = [
+    "Muy bien mi niña 💗",
+    "¡Te amo! 😘",
+    "Eres increíble ✨",
+    "Lo hiciste muy bien 🌸",
+    "Sos la mejor 💞",
+    "Estoy tan orgulloso de ti 💖",
+    "¡Qué ternura! 🥹",
+    "Cada vez lo haces mejor 😍"
+  ];
+
+  const winMessage = "Felicidades mi amoor 🫶🏻";
+
+  function startGame(){
+    kitty = { x: 50, y: canvas.height - 100, vy: 0, jumping: false, width: 60, height: 60 };
+    obstacles = [];
+    frameCount = 0;
+    gameEnded = false;
+    document.getElementById('message').style.display = 'none';
+    updateLoop = setInterval(update, 1000/60);
+    spawnLoop = setInterval(spawnObstacle, 2000);
+  }
+
+  function randomMsg(){
+    return messages[Math.floor(Math.random() * messages.length)];
+  }
+
+  function spawnObstacle(){
+    const type = Math.random() > 0.5 ? 'fresa' : 'pino';
+    obstacles.push({ x: canvas.width, y: canvas.height - 70, type, width: 50, height: 50 });
+  }
+
+  function stopGame(msg){
+    gameEnded = true;
+    clearInterval(updateLoop);
+    clearInterval(spawnLoop);
+    document.getElementById('msgText').innerText = msg;
+    document.getElementById('message').style.display = 'block';
+  }
+
+  function update(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (kitty.jumping){
+      kitty.vy -= gravity;
+      kitty.y -= kitty.vy;
+      if (kitty.y >= canvas.height - 100){
+        kitty.y = canvas.height - 100;
+        kitty.jumping = false;
+        kitty.vy = 0;
+      }
+    }
+    ctx.drawImage(kittyImg, kitty.x, kitty.y, kitty.width, kitty.height);
+
+    for (let i = obstacles.length -1; i >= 0; i--){
+      const o = obstacles[i];
+      o.x -= 6;
+      const img = (o.type === 'fresa' ? fresaImg : pinoImg);
+      ctx.drawImage(img, o.x, o.y, o.width, o.height);
+      if (kitty.x < o.x + o.width && kitty.x + kitty.width > o.x && kitty.y < o.y + o.height){
+        stopGame(randomMsg());
+        return;
+      }
+      if (o.x < -50) obstacles.splice(i,1);
+    }
+
+    frameCount++;
+    if (frameCount > 1500){
+      stopGame(winMessage);
+    }
+  }
+
+  function jump(){
+    if (!kitty.jumping && !gameEnded){
+      kitty.jumping = true;
+      kitty.vy = jumpPower;
+    }
+  }
+
+  document.addEventListener('keydown', e=>{ if(e.code=='Space') jump(); });
+  document.addEventListener('touchstart', jump);
+  document.getElementById('play').addEventListener('click', startGame);
+
+  startGame();
+</script>
+</body>
+</html>
